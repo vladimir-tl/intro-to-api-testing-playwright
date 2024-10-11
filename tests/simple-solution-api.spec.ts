@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 
 test('get order with correct id should receive code 200', async ({ request }) => {
   // Build and send a GET request to the server
-  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/1')
+      const response = await request.get('https://backend.tallinn-learning.ee/test-orders/1')
   // Log the response status, body and headers
   console.log('response body:', await response.json())
   console.log('response headers:', response.headers())
