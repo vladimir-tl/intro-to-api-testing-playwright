@@ -33,6 +33,4 @@ export class OrderDto {
       Math.floor(Math.random() * 100),
     )
   }
-
-
 }
