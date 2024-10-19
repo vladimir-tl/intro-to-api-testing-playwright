@@ -65,7 +65,7 @@ test.describe('Simple solution API tests', () => {
     validateResponseBody(responseBody)
   })
 
-  function validateResponseBody(responseBody: any) {
+  function validateResponseBody(responseBody: OrderDto): void {
     expect.soft(responseBody.status).toBeDefined()
     expect.soft(responseBody.courierId).toBeNull()
     expect.soft(responseBody.customerName).toMatch(/\w+/)
