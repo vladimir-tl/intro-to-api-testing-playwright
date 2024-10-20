@@ -5,13 +5,13 @@ import { OrderDto } from '../dto/order-dto'
 import Ajv from 'ajv'
 import schema from '../dto/order-schema.json'
 
-const serviceURL = 'https://backend.tallinn-learning.ee/test-orders'
+const serviceMockedURL = 'https://backend.tallinn-learning.ee/test-orders'
 
 // add test describe as test suite
 test.describe('Simple solution API tests', () => {
   test('get order with correct id should receive code 200', async ({ request }) => {
     // Build and send a GET request to the server
-    const response = await request.get(`${serviceURL}/1`)
+    const response = await request.get(`${serviceMockedURL}/1`)
     // Log the response status, body and headers
     console.log('response body:', await response.json())
     console.log('response headers:', response.headers())
@@ -21,7 +21,7 @@ test.describe('Simple solution API tests', () => {
   test('post order with correct data should receive code 200', async ({ request }) => {
     // prepare request body with dto pattern
     const requestBody = new OrderDto('OPEN', 0, 'John Doe', '+123456789', 'Urgent order', 0)
-    const response = await request.post(serviceURL, {
+    const response = await request.post(serviceMockedURL, {
       data: requestBody,
     })
     expect.soft(response.status()).toBe(StatusCodes.OK)
@@ -35,8 +35,8 @@ test.describe('Simple solution API tests', () => {
     request,
   }) => {
     // prepare request body with dto pattern
-    const requestBody = OrderDto.createOrderWithRandomData()
-    const response = await request.post(serviceURL, {
+    const requestBody = OrderDto.createOrderWithRandomData(true)
+    const response = await request.post(serviceMockedURL, {
       data: requestBody,
     })
     expect.soft(response.status()).toBe(StatusCodes.OK)
@@ -51,7 +51,7 @@ test.describe('Simple solution API tests', () => {
   })
 
   test('validate API response against JSON schema', async ({ request }) => {
-    const response = await request.get(`${serviceURL}/1`)
+    const response = await request.get(`${serviceMockedURL}/1`)
     const responseBody = await response.json()
 
     // Validate response against the JSON schema
