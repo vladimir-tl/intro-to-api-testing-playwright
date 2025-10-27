@@ -7,10 +7,7 @@ export class LoginDto {
     this.password = password
   }
 
-  static createLoginDto(): LoginDto{
-    return new LoginDto(
-      process.env.USER || '',
-      process.env.PASSWORD || '')
+  static createLoginDto(): LoginDto {
+    return new LoginDto(process.env.USER || '', process.env.PASSWORD || '')
   }
-
 }
