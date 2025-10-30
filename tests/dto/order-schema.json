@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "status": { "type": "string" },
+    "courierId": { "type": ["null", "string"] },
+    "customerName": { "type": "string" },
+    "customerPhone": { "type": "string" },
+    "comment": { "type": "string" },
+    "id": { "type": "number" }
+  },
+  "required": ["status", "courierId", "customerName", "customerPhone", "comment", "id"]
+}
