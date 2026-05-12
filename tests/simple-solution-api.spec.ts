@@ -1,125 +1,98 @@
 import { expect, test } from '@playwright/test'
-
+import { ProductDTO, Product } from '../src/DTO/ProductDTO'
 import { StatusCodes } from 'http-status-codes'
 
-test('get order with correct id should receive code 200', async ({ request }) => {
-  // Build and send a GET request to the server
-  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/1')
+test.describe('Lesson 11 -> Product API tests', () => {
+  const BaseEndpointURL = 'https://backend.tallinn-learning.ee/products'
+  const AUTH = { 'X-API-Key': 'my-secret-api-key' }
 
-  // parse raw response body to json
-  const responseBody = await response.json()
-  const statusCode = response.status()
+  test('GET /products - check API returns array with length >= 1', async ({ request }) => {
+    const response = await request.get(BaseEndpointURL, {
+      headers: AUTH,
+    })
 
-  // Log the response status, body and headers
-  console.log('response body:', responseBody)
-  // Check if the response status is 200
-  expect(statusCode).toBe(200)
-})
-
-test('post order with correct data should receive code 201', async ({ request }) => {
-  // prepare request body
-  const requestBody = {
-    status: 'OPEN',
-    courierId: 0,
-    customerName: 'string',
-    customerPhone: 'string',
-    comment: 'string',
-    id: 0,
-  }
-  // Send a POST request to the server
-  const response = await request.post('https://backend.tallinn-learning.ee/test-orders', {
-    data: requestBody,
-  })
-  // parse raw response body to json
-  const responseBody = await response.json()
-  const statusCode = response.status()
-
-  // Log the response status and body
-  console.log('response status:', statusCode)
-  console.log('response body:', responseBody)
-  expect(statusCode).toBe(StatusCodes.OK)
-  // check that body.comment is string type
-  expect(typeof responseBody.comment).toBe('string')
-  // check that body.courierId is number type
-  expect(typeof responseBody.courierId).toBe('number')
-})
-
-// Homework 10
-
-test('put order with correct data should receive code 200', async ({ request }) => {
-
-  const requestBody = {
-    status: 'OPEN',
-    courierId: 1,
-    customerName: 'Maksim',
-    customerPhone: '123456',
-    comment: 'updated',
-    id: 1,
-  }
-  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {
-    headers: { api_key: '1234567890123456' },
-    data: requestBody,
+    const responseBody: Product[] = await response.json()
+    expect(response.status()).toBe(StatusCodes.OK)
+    expect(responseBody.length).toBeDefined()
+    expect(responseBody.length).toBeGreaterThanOrEqual(1)
   })
 
-  const responseBody = await response.json()
-  const statusCode = response.status()
+  test('POST /products; GET /products/{id} - check product creation and product search by id', async ({
+    request,
+  }) => {
+    const testProduct = ProductDTO.generateDefault()
 
-  console.log('response status:', statusCode)
-  console.log('response body:', responseBody)
+    const createResponse = await request.post(BaseEndpointURL, {
+      headers: AUTH,
+      data: testProduct,
+    })
 
-  expect(statusCode).toBe(200)
-})
+    const createResponseBody: Product = await createResponse.json()
+    expect(createResponse.status()).toBe(StatusCodes.OK) // На этом сервере POST возвращает 200
+    expect(createResponseBody.id).toBeGreaterThan(0)
 
-test('put order with empty body should receive code 404', async ({ request }) => {
-
-  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {
-    headers: { api_key: '1234567890123456' },
-    data: {},
+    const searchResponse = await request.get(`${BaseEndpointURL}/${createResponseBody.id}`, {
+      headers: AUTH,
+    })
+    const searchResponseBody: Product = await searchResponse.json()
+    expect(searchResponse.status()).toBe(StatusCodes.OK)
+    expect.soft(searchResponseBody.id).toBe(createResponseBody.id)
+    expect.soft(searchResponseBody.name).toBe(testProduct.name)
   })
 
-  const statusCode = response.status()
-  console.log('response status for empty body:', statusCode)
-
-  expect(statusCode).toBe(404)
-})
-
-test('delete order with correct key should receive code 204', async ({ request }) => {
-
-  const response = await request.delete('https://backend.tallinn-learning.ee/test-orders/1', {
-    headers: { api_key: '1234567890123456' },
+  test('GET /products/{id} - should not return product with invalid API key', async ({
+    request,
+  }) => {
+    const response = await request.get(`${BaseEndpointURL}/1`, {
+      headers: { 'X-API-Key': 'invalid-key' },
+    })
+    expect(response.status()).toBe(StatusCodes.UNAUTHORIZED)
   })
 
-  const statusCode = response.status()
-  console.log('response status:', statusCode)
+  test('PUT /products/{id} - should update product', async ({ request }) => {
+    const testProduct = ProductDTO.generateDefault()
+    const createResponse = await request.post(BaseEndpointURL, {
+      headers: AUTH,
+      data: testProduct,
+    })
+    const createResponseBody: Product = await createResponse.json()
 
-  expect(statusCode).toBe(204)
-})
+    const updatedProduct = ProductDTO.generateCustom('Updated Product', 999)
+    const updateResponse = await request.put(`${BaseEndpointURL}/${createResponseBody.id}`, {
+      headers: AUTH,
+      data: updatedProduct,
+    })
 
-test('get auth with credentials should receive code 200', async ({ request }) => {
-  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/auth', {
-    params: {
-      username: 'mminajev',
-      password: 'dhmus5qbYbfT2n',
-    },
+    const updateResponseBody: Product = await updateResponse.json()
+    expect(updateResponse.status()).toBe(StatusCodes.OK)
+    expect(updateResponseBody.name).toBe(updatedProduct.name)
+    expect(updateResponseBody.price).toBe(updatedProduct.price)
   })
 
-  const responseBody = await response.text()
-  const statusCode = response.status()
+  test('DELETE /products - check product deletion', async ({ request }) => {
+    const testProduct = ProductDTO.generateDefault()
+    const createResponse = await request.post(BaseEndpointURL, {
+      headers: AUTH,
+      data: testProduct,
+    })
+    const createResponseBody: Product = await createResponse.json()
 
-  console.log('auth response body:', responseBody)
-  console.log('auth response status:', statusCode)
+    const deleteResponse = await request.delete(`${BaseEndpointURL}/${createResponseBody.id}`, {
+      headers: AUTH,
+    })
+    expect(deleteResponse.status()).toBe(StatusCodes.NO_CONTENT)
 
-  expect(statusCode).toBe(200)
-})
+    const searchResponse = await request.get(`${BaseEndpointURL}/${createResponseBody.id}`, {
+      headers: AUTH,
+    })
 
-test('get auth without password should receive code 500', async ({ request }) => {
-
-  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/auth', {
-    params: { username: 'mminajev' },
+    expect(searchResponse.status()).toBe(StatusCodes.BAD_REQUEST)
   })
 
-  const statusCode = response.status()
-  console.log('auth error status:', statusCode)
-
-  expect(statusCode).toBe(500)
+  test('DELETE /products - check not existing product deletion', async ({ request }) => {
+    const deleteResponse = await request.delete(`${BaseEndpointURL}/-1`, {
+      headers: AUTH,
+    })
+    expect(deleteResponse.status()).toBe(StatusCodes.BAD_REQUEST)
+  })
 })
