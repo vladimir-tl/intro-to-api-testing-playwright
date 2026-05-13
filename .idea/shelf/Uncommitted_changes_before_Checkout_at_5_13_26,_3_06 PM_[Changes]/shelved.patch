@@ -1,0 +1,39 @@
+Index: tests/simple-solution-api.spec.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import { expect, test } from '@playwright/test'\n\nimport { StatusCodes } from 'http-status-codes'\n\ntest('get order with correct id should receive code 200', async ({ request }) => {\n  // Build and send a GET request to the server\n  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/1')\n\n  // parse raw response body to json\n  const responseBody = await response.json()\n  const statusCode = response.status()\n\n  // Log the response status, body and headers\n  console.log('response body:', responseBody)\n  // Check if the response status is 200\n  expect(statusCode).toBe(200)\n})\n\ntest('post order with correct data should receive code 201', async ({ request }) => {\n  // prepare request body\n  const requestBody = {\n    status: 'OPEN',\n    courierId: 0,\n    customerName: 'string',\n    customerPhone: 'string',\n    comment: 'string',\n    id: 0,\n  }\n  // Send a POST request to the server\n  const response = await request.post('https://backend.tallinn-learning.ee/test-orders', {\n    data: requestBody,\n  })\n  // parse raw response body to json\n  const responseBody = await response.json()\n  const statusCode = response.status()\n\n  // Log the response status and body\n  console.log('response status:', statusCode)\n  console.log('response body:', responseBody)\n  expect(statusCode).toBe(StatusCodes.OK)\n  // check that body.comment is string type\n  expect(typeof responseBody.comment).toBe('string')\n  // check that body.courierId is number type\n  expect(typeof responseBody.courierId).toBe('number')\n})\n\n// Homework 10\n\ntest('put order with correct data should receive code 200', async ({ request }) => {\n  const requestBody = {\n    status: 'OPEN',\n    courierId: 1,\n    customerName: 'Maksim',\n    customerPhone: '123456',\n    comment: 'updated',\n    id: 1,\n  }\n  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {\n    headers: { api_key: '1234567890123456' },\n    data: requestBody,\n  })\n\n  const responseBody = await response.json()\n  const statusCode = response.status()\n\n  console.log('response status:', statusCode)\n  console.log('response body:', responseBody)\n\n  expect(statusCode).toBe(200)\n})\n\ntest('put order with empty body should receive code 404', async ({ request }) => {\n  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {\n    headers: { api_key: '1234567890123456' },\n    data: {},\n  })\n\n  const statusCode = response.status()\n  console.log('response status for empty body:', statusCode)\n\n  expect(statusCode).toBe(404)\n})\n\ntest('delete order with correct key should receive code 204', async ({ request }) => {\n  const response = await request.delete('https://backend.tallinn-learning.ee/test-orders/1', {\n    headers: { api_key: '1234567890123456' },\n  })\n\n  const statusCode = response.status()\n  console.log('response status:', statusCode)\n\n  expect(statusCode).toBe(204)\n})\n\ntest('get auth with credentials should receive code 200', async ({ request }) => {\n  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/auth', {\n    params: {\n      username: 'mminajev',\n      password: 'dhmus5qbYbfT2n',\n    },\n  })\n\n  const responseBody = await response.text()\n  const statusCode = response.status()\n\n  console.log('auth response body:', responseBody)\n  console.log('auth response status:', statusCode)\n\n  expect(statusCode).toBe(200)\n})\n\ntest('get auth without password should receive code 500', async ({ request }) => {\n  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/auth', {\n    params: { username: 'mminajev' },\n  })\n\n  const statusCode = response.status()\n  console.log('auth error status:', statusCode)\n\n  expect(statusCode).toBe(500)\n})\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/tests/simple-solution-api.spec.ts b/tests/simple-solution-api.spec.ts
+--- a/tests/simple-solution-api.spec.ts	(revision 8854bb4f4a115962bd5255f2af8eb4ca7725fa78)
++++ b/tests/simple-solution-api.spec.ts	(date 1778673843413)
+@@ -119,3 +119,27 @@
+ 
+   expect(statusCode).toBe(500)
+ })
++
++test('put order without API key should receive code 401', async ({ request }) => {
++  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {
++    headers: { api_key: '' },
++    data: {
++      status: 'OPEN',
++      courierId: 1,
++      customerName: 'Maksim',
++      customerPhone: '123456',
++      comment: 'updated',
++      id: 1,
++    },
++  })
++
++  expect(response.status()).toBe(StatusCodes.UNAUTHORIZED)
++})
++
++test('delete order without API key should receive code 401', async ({ request }) => {
++  const response = await request.delete('https://backend.tallinn-learning.ee/test-orders/1', {
++    headers: { api_key: '' },
++  })
++
++  expect(response.status()).toBe(StatusCodes.UNAUTHORIZED)
++})
+\ No newline at end of file

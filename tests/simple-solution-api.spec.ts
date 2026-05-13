@@ -43,3 +43,103 @@ test('post order with correct data should receive code 201', async ({ request })
   // check that body.courierId is number type
   expect(typeof responseBody.courierId).toBe('number')
 })
+
+// Homework 10
+
+test('put order with correct data should receive code 200', async ({ request }) => {
+  const requestBody = {
+    status: 'OPEN',
+    courierId: 1,
+    customerName: 'Maksim',
+    customerPhone: '123456',
+    comment: 'updated',
+    id: 1,
+  }
+  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {
+    headers: { api_key: '1234567890123456' },
+    data: requestBody,
+  })
+
+  const responseBody = await response.json()
+  const statusCode = response.status()
+
+  console.log('response status:', statusCode)
+  console.log('response body:', responseBody)
+
+  expect(statusCode).toBe(200)
+})
+
+test('put order with empty body should receive code 404', async ({ request }) => {
+  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {
+    headers: { api_key: '1234567890123456' },
+    data: {},
+  })
+
+  const statusCode = response.status()
+  console.log('response status for empty body:', statusCode)
+
+  expect(statusCode).toBe(404)
+})
+
+test('delete order with correct key should receive code 204', async ({ request }) => {
+  const response = await request.delete('https://backend.tallinn-learning.ee/test-orders/1', {
+    headers: { api_key: '1234567890123456' },
+  })
+
+  const statusCode = response.status()
+  console.log('response status:', statusCode)
+
+  expect(statusCode).toBe(204)
+})
+
+test('get auth with credentials should receive code 200', async ({ request }) => {
+  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/auth', {
+    params: {
+      username: 'mminajev',
+      password: 'dhmus5qbYbfT2n',
+    },
+  })
+
+  const responseBody = await response.text()
+  const statusCode = response.status()
+
+  console.log('auth response body:', responseBody)
+  console.log('auth response status:', statusCode)
+
+  expect(statusCode).toBe(200)
+})
+
+test('get auth without password should receive code 500', async ({ request }) => {
+  const response = await request.get('https://backend.tallinn-learning.ee/test-orders/auth', {
+    params: { username: 'mminajev' },
+  })
+
+  const statusCode = response.status()
+  console.log('auth error status:', statusCode)
+
+  expect(statusCode).toBe(500)
+})
+
+test('put order without API key should receive code 401', async ({ request }) => {
+  const response = await request.put('https://backend.tallinn-learning.ee/test-orders/1', {
+    headers: { api_key: '' },
+    data: {
+      status: 'OPEN',
+      courierId: 1,
+      customerName: 'Maksim',
+      customerPhone: '123456',
+      comment: 'updated',
+      id: 1,
+    },
+  })
+
+  expect(response.status()).toBe(StatusCodes.UNAUTHORIZED)
+})
+
+test('delete order without API key should receive code 401', async ({ request }) => {
+  const response = await request.delete('https://backend.tallinn-learning.ee/test-orders/1', {
+    headers: { api_key: '' },
+  })
+
+  expect(response.status()).toBe(StatusCodes.UNAUTHORIZED)
+})
